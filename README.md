@@ -11,23 +11,50 @@ Your goal is to:
 - Evaluate what your system gets right and wrong
 - Reflect on how this mirrors real world AI recommenders
 
-Replace this paragraph with your own summary of what your version does.
+This simulation builds a content-based music recommender that scores songs against a user's taste profile using weighted feature matching. It prioritizes mood and energy as the primary "vibe" signals, supported by acousticness and genre as texture and style cues. The goal is to recommend songs that feel contextually right — not just popular or generically similar.
 
 ---
 
 ## How The System Works
 
-Explain your design in plain language.
+Real-world recommenders like Spotify and YouTube use two main strategies: **collaborative filtering** (finding users with similar taste and surfacing what they love) and **content-based filtering** (analyzing the audio attributes of songs to match a listener's established preferences). Production systems combine both, but collaborative filtering requires large amounts of user behavior data that a small simulation cannot replicate. This version focuses on **content-based filtering**: each song is scored purely on how closely its attributes match the user's stated preferences, with no dependency on what other users have done.
 
-Some prompts to answer:
+This system will prioritize **mood and energy** as the dominant signals — they best capture the "vibe" a listener is seeking in a given context (studying, working out, winding down). Acousticness and genre serve as supporting signals that refine texture and style. All numeric features use a **proximity score** (`1 - |song_value - user_target|`) so that songs closest to the user's target win, rather than songs that are simply louder, faster, or more energetic.
 
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
+### `Song` features used
 
-You can include a simple diagram or bullet list if helpful.
+| Feature | Type | Role in scoring |
+|---|---|---|
+| `genre` | `str` | Categorical match — style and instrument family |
+| `mood` | `str` | Categorical match — primary vibe signal (weight: 0.35) |
+| `energy` | `float` 0.0–1.0 | Proximity to `target_energy` (weight: 0.30) |
+| `acousticness` | `float` 0.0–1.0 | Proximity to acoustic preference (weight: 0.20) |
+| `valence` | `float` 0.0–1.0 | Emotional positivity — available for future weighting |
+| `danceability` | `float` 0.0–1.0 | Rhythmic feel — available for future weighting |
+| `tempo_bpm` | `float` | BPM — available for context-specific filtering |
+
+### `UserProfile` fields used
+
+| Field | Type | How it's used |
+|---|---|---|
+| `favorite_genre` | `str` | Matched against `song.genre` (weight: 0.10) |
+| `favorite_mood` | `str` | Matched against `song.mood` (weight: 0.35) |
+| `target_energy` | `float` | Proximity score against `song.energy` (weight: 0.30) |
+| `likes_acoustic` | `bool` | Maps to acoustic target: 0.8 if True, 0.2 if False (weight: 0.20 + 0.05 bonus) |
+
+### Scoring and ranking
+
+Each song receives a weighted score from 0.0 to 1.0:
+
+```
+score = 0.35 × mood_match
+      + 0.30 × (1 - |song.energy - user.target_energy|)
+      + 0.20 × (1 - |song.acousticness - acoustic_target|)
+      + 0.10 × genre_match
+      + 0.05 × acoustic_bonus
+```
+
+All songs are scored independently, then sorted descending by score. The top `k` results are returned as recommendations.
 
 ---
 

@@ -1,0 +1,48 @@
+How Streaming Platforms Predict What You'll Love Next
+Collaborative Filtering — Learning from the Crowd
+The core insight: users who agreed in the past tend to agree in the future. 
+Rather than analyzing what a song sounds like, CF looks at what people do — streams, skips, playlist adds, likes — to find taste neighbors.
+
+How it works:
+
+Matrix factorization: Builds a giant user-song matrix and decomposes it into latent "taste" vectors for both users and songs. 
+                        A user vector dotted with a song vector produces a predicted affinity score.
+k-Nearest Neighbors: Find users most similar to you, then surface songs they loved that you haven't heard.
+Spotify's twist: Treats 700M user-generated playlists as "sentences" and songs as "words" — 
+                    running a Word2Vec-style model so that songs appearing on the same playlists end up close together in embedding space. 
+                    This powers Discover Weekly.
+Strength: Discovers music outside your comfort zone by surfacing what taste-twins love.
+Weakness: Fails completely for new users or new songs with no history (the cold-start problem).
+
+Content-Based Filtering — Analyzing the Music Itself
+The core insight: recommend songs that sound like songs you already like. No other users required.
+
+How it works:
+
+Audio feature extraction: Spotify extracts features like danceability, energy, valence, tempo, acousticness, speechiness, and up to 
+                            42 internal dimensions per track.
+CNNs on raw audio: For brand-new songs with no play history, Spotify runs convolutional neural networks directly on audio spectrograms to generate a "pseudo-listen" embedding — 
+                    placing the song in recommendation space before any human has heard it.
+NLP on cultural context: Spotify also ingests playlist titles, blog posts, lyrics, and social media to extract cultural tags 
+                        (e.g., "melancholic acoustic") using LLMs.
+Taste profile: Your profile is the aggregate feature vector of songs you've liked. New songs nearest to that centroid get surfaced.
+Strength: Works immediately for new songs and new users who state explicit preferences.
+Weakness: Tends toward a filter bubble — locking you into the attributes of music you already know.
+
+How Platforms Combine Both (Hybrid Systems)
+Platform	Approach
+Spotify	3-layer hybrid: collaborative embeddings + CNN audio embeddings + NLP cultural vectors, all fused into a universal foundation layer. 
+                        Uses contextual bandits (BaRT framework) on the homepage. LLM-generated explanation narratives boosted clicks on niche content 4x.
+YouTube Music	Two-tower neural model: one tower embeds users (watch history, queries), one embeds tracks (content + metadata). kNN retrieves candidates, then a transformer ranker re-ranks by modeling which parts of your history are contextually relevant.
+Apple Music	"Algo-torial" — ML recommendations reviewed by human music editors for quality control and cultural nuance.
+Deezer	Treats playlist building as a sequence-to-sequence problem with transformer models; researching LLM-based recommendation.
+Key Tradeoffs
+Collaborative Filtering	Content-Based Filtering	Hybrid/Neural
+Cold start (new user)	Fails	Works from stated prefs	Onboarding questionnaires
+Cold start (new song)	Fails	Works immediately	CNN audio bridges the gap
+Filter bubble risk	High	High	Mitigated with diversity constraints
+Serendipity	Moderate (via taste neighbors)	Low	High (bandit exploration)
+Interpretability	Low	Moderate	Very low
+Filter bubble reality check: A 2024 study of ~50K Deezer users found algorithms can produce both confinement and exploration depending on context — it's not as simple as "algorithms always narrow taste." Platforms inject serendipity via exploration bonuses in bandit algorithms, diversity caps in ranking, and LLM-mediated explanations that make unexpected recommendations feel less jarring.
+
+This directly maps to the patterns in your recommender.py — the song attribute matching is a classic content-based approach, and adding user-similarity logic would move it toward collaborative filtering.
