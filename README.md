@@ -312,16 +312,52 @@ You will go deeper on this in your model card.
 
 ---
 
+---
+
 ## Reflection
 
 Read and complete `model_card.md`:
 
-[**Model Card**](model_card.md)
+[**Complete Model Card** →](model_card.md)
 
-Write 1 to 2 paragraphs here about what you learned:
+### Engineering Reflection
 
-- about how recommenders turn data into predictions
-- about where bias or unfairness could show up in systems like this
+This project demonstrated how recommender systems move from research → design → implementation → evaluation → iteration. Here are the key insights:
+
+**Phase 1–2: Research & Design**
+- Real Spotify uses an LLM-enhanced hybrid approach with transformers, CNNs, and collaborative signals
+- Content-based filtering (what this system is) is the foundation, but production systems layer collaborative signals, contextual bandits, and NLP 
+- Simple features (energy, mood) proxy for complex listening contexts surprisingly well
+
+**Phase 3: Implementation**
+- Writing clean, testable code with clear scoring logic made debugging trivial
+- The separation between `score_song()` (individual song) and `recommend()` (ranking) was critical — allowed independent testing
+- Adding explanations to recommendations was as important as the scores themselves
+
+**Phase 4: Evaluation Surprise**
+- Testing with "bad data" (conflicting preferences like sad + high energy) revealed real limitations
+- A perfectly coded system can still produce unintuitive results if the algorithm design is flawed
+- Testing is not just about correctness; it's about finding what the system *should* do differently
+
+**Phase 5: Documenting Bias**
+- The model card isn't a box to tick; it's a commitment to honesty about limitations
+- Every design choice (mood weight = 1.40) has consequences you can trace through to actual user experience
+- "It's just 18 songs" is not an excuse—it's a concrete limitation that must be documented
+
+**Three Key Moments:**
+
+1. **Weight decision:** Choosing mood as 35% felt arbitrary until Phase 4 testing showed it shapes the entire user experience
+2. **Edge case finding:** The "sad + high energy" profile broke the system in an informative way—showed that competing signals need conflict resolution, not just weighting
+3. **Filter bubble realization:** Classical listener getting a 1.74-point gap to 2nd place taught me that "working correctly" ≠ "serving all users equally"
+
+**If you're building recommenders:**
+- Start with simple features, not complex embeddings
+- Test with adversarial profiles, not just happy-path users
+- Document assumptions openly (this system assumes mood > genre)
+- Remember that small datasets expose algorithm flaws; large datasets can hide them
+- Bias isn't always intentional—it emerges from reasonable-seeming choices at scale
+
+---
 
 
 ---

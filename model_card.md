@@ -20,6 +20,18 @@ VibeMatcher generates personalized music recommendations for listeners based on 
 - Mood is more important than genre (35% of score)
 - A small catalog (18 songs) is sufficient to test the logic
 
+### Non-Intended Uses (Do NOT use this system for):
+
+❌ **Production music recommendation:** The 18-song catalog is too small. Real systems need millions of tracks and way more sophisticated logic.
+
+❌ **Personalization at scale:** No user history, no collaborative filtering, no A/B testing. This is a single-request system, not a live service.
+
+❌ **Complex musical preferences:** If you like "sad indie folk with electronic beats and melancholic vocals," this system can't model that. It treats all preferences as independent signals.
+
+❌ **Cultural sensitivity:** The mood and genre tags are subjective and culturally bound. "Happy" and "peaceful" mean different things to different people, and this system doesn't account for that.
+
+❌ **Accessibility or fair recommendation:** This system has no protections against bias. It may inadvertently marginalize certain genres, artists, or user profiles due to the small dataset and weighted scoring.
+
 ---
 
 ## 3. How the Model Works  
@@ -133,8 +145,35 @@ Each song gets a score 0.0 to 4.0. The recommender sorts all songs by score and 
 
 ## 9. Personal Reflection  
 
+### Learning Journey
+
 **What I learned:** Recommender systems are deceptively complex because preferences are multi-dimensional and often contradictory. A single weight change (mood from 1.40 to 1.0) cascades through the entire ranking. The edge case of conflicting preferences taught me that systems need to be designed for *realistic* user behavior, not just the happy path.
 
 **Surprise:** I expected genre to be the strongest signal (people usually say "I want blues" or "I want indie"). Instead, I found that mood—something less explicit in how people talk—was much more predictive of satisfaction. This mirrors what Spotify research shows: "What do you want to feel right now?" beats "What's your favorite genre?"
 
 **How this changed my thinking:** Recommender systems aren't neutral. By choosing mood as 35% of the score, I created a world where mood matters more than anything else. That's a design decision with real consequences for users with rare mood preferences or complex emotional states. Real systems like Spotify solve this with *billions* of interactions; here, I see how a small dataset and simple weights can accidentally create filter bubbles for edge cases.
+
+### Working with AI Tools
+
+**What helped:**
+- **Research context:** AI tools were excellent for summarizing how Spotify, YouTube, and Apple Music actually build their systems, grounding my design decisions in real-world patterns
+- **Brainstorming weight values:** When I wasn't sure whether mood should be 1.40 or 1.0, AI helped me think through tradeoffs and what each choice implied
+- **Identifying edge cases:** Prompting "what adversarial profiles would break this system?" led me to test the "sad + high energy" case, which revealed a real limitation
+- **Explaining results:** AI helped me articulate why certain recommendations ranked where they did in clear, non-technical language
+
+**Where I had to take the lead:**
+- **Design decisions:** AI can explain options but can't decide *for* me. I chose mood over genre based on my intuition about listening behavior, then validated it through testing
+- **Testing strategy:** I designed the 5-profile test suite myself, including the edge case. AI could suggest profiles but only *I* knew what I was trying to prove
+- **Interpreting results:** When the edge case showed mood overriding energy, I had to decide if it was a bug or a feature. AI explained the math; I decided it was a feature, just with limitations
+- **Code quality:** AI generated functional code, but I had to verify the math, add docstrings, and test thoroughly
+
+**Key lesson:** AI is a brainstorming partner, not a replacement for critical thinking. It helped me move faster and think broader, but every important decision—weights, evaluation strategy, bias analysis—required my judgment.
+
+### What I'd Try Next
+
+If I kept working on this:
+1. **Test with real users:** Run A/B tests where half see mood-heavy recommendations (current system) and half see genre-heavy. Which do users prefer? How do recommendations differ?
+2. **Add mood hierarchies:** Implement "happy" and "uplifting" as nearby in embedding space, not binary. Use a mood similarity matrix instead of hard matches
+3. **Session context:** Track what you've been listening to and recommend differently based on time of day, device, or recent plays
+4. **Collaborative layer:** Mix content-based (what we have) with "users like you also enjoyed..." signals (which would require user data)
+5. **Fairness audits:** Systematically check: Are certain genres always ranked lower? Do certain moods get isolated? Do certain users get stuck in filter bubbles?
