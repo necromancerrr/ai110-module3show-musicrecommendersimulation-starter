@@ -127,7 +127,31 @@ score(song, user) =
 
 ---
 
-## Getting Started
+## Experiments You Tried
+
+### Experiment 1: Mood Weight Sensitivity
+
+**Hypothesis:** Mood weight is too heavy (1.40 pts = 35% of score). Does it create filter bubbles?
+
+**Test case:** User seeking "peaceful + classical" music
+- **Current system:** String Quartet No. 3 scores 3.81/4.00, next best is 2.07/4.00
+- **Gap:** 1.74 points — the mood bonus is irreplaceable
+- **Observation:** Even unrelated genres (jazz, lofi, ambient) score 2.0–2.07 if energy is close, showing mood weight dominates
+
+**Finding:** ✅ **Mood weighting works as designed.** The large gap isn't a bug; it's the intended behavior — mood should be the primary signal. However, it exposes a dataset limitation: with only 1 "peaceful" song in the catalog, a peaceful listener has limited options.
+
+**Implication:** In a real catalog with 500 peaceful songs, the top 5 would all be peaceful. Here, users see forced cross-genre substitutes due to scarcity, not by algorithmic design.
+
+### Experiment 2: Cross-Genre Behavior Validation
+
+**Observation:** High-energy pop listener received:
+1. Sunrise City (pop, happy, 0.82 energy) — 3.95 pts
+2. Rooftop Lights (indie pop, happy, 0.76 energy) — 3.37 pts
+3. Gym Hero (pop, intense, 0.93 energy) — 2.38 pts
+
+**Analysis:** Genre is a soft signal (0.40 pts). Indie pop ranks 2nd despite not matching genre because happiness + energy + acoustic preference combine for 3.37 pts. Gym Hero loses the mood match (-1.40 pts) but keeps the genre match, placing 3rd.
+
+**Finding:** ✅ **Genre as tiebreaker works.** The system avoids hard genre gates while respecting genre preference when other factors are equal.
 
 ### Setup
 
@@ -220,7 +244,51 @@ Here's what the CLI produces for a "chill lofi acoustic" user:
 
 ---
 
-## Experiments You Tried
+## Phase 4: Evaluation Results
+
+### Test Profiles & Observations
+
+Five distinct user profiles were tested to evaluate system behavior:
+
+#### 1. **Chill Lofi Listener (Baseline)**
+- Genre: lofi | Mood: chill | Energy: 0.38 | Acoustic: Yes
+- **Top result:** Library Rain (3.92/4.00) — perfect alignment
+- **Pattern:** All mood matches get 1.40 pts, energy proximity adds up to ~0.89 pts
+- **Verdict:** ✅ Works as designed — mood dominates, energy proximity matters
+
+#### 2. **High-Energy Pop Dancer**
+- Genre: pop | Mood: happy | Energy: 0.85 | Acoustic: No
+- **Top result:** Sunrise City (3.95/4.00) — perfect alignment on all axes
+- **Observation:** Gym Hero (pop, intense, 0.93 energy) ranks 3rd despite mood mismatch—shows energy proximity can overcome mood gap for close matches
+- **Verdict:** ⚠️ Mood mismatch penalty (1.40 pts) is significant but not insurmountable if energy matches well
+
+#### 3. **Intense Rock Headbanger**
+- Genre: rock | Mood: intense | Energy: 0.9 | Acoustic: No
+- **Top result:** Storm Runner (3.91/4.00) — perfect mood + genre + energy
+- **Observation:** Gym Hero (2nd place) shows genre is still a low-weight signal (0.40 pts) — rock listener prefers rock but pop works if energy/mood match
+- **Verdict:** ✅ Mood + energy + genre work correctly; genre as soft tiebreaker is validated
+
+#### 4. **Peaceful Classical Listener**
+- Genre: classical | Mood: peaceful | Energy: 0.25 | Acoustic: Yes
+- **Top result:** String Quartet No. 3 (3.81/4.00) — perfect match
+- **Observation:** Huge score gap to 2nd place (Spacewalk Thoughts 2.07) — classical lovers get isolated by mood mismatch penalty
+- **Verdict:** ⚠️ Mood weight creates "filter bubbles" — peaceful mood is rare in dataset, limits cross-genre discovery
+
+#### 5. **Conflicting Preferences (Edge Case)**
+- Genre: metal | Mood: sad | Energy: 0.95 | Acoustic: No
+- **Top result:** Broken Clocks (2.74/4.00) — r&b, sad, energy 0.39
+- **Key insight:** Mood match (1.40 pts) beats energy proximity even when energy gap is huge (0.95 → 0.39 = -0.59 proximity, loses ~0.71 pts). Shows mood dominance can lead to unintuitive results.
+- **Verdict:** 🔴 **Mood too heavy** — a user seeking "sad + high energy" gets low-energy sad songs instead of high-energy music that doesn't match mood
+
+### Discovered Biases & Limitations
+
+| Issue | Example | Impact |
+|---|---|---|
+| **Mood over-dominance** | Conflicting edge case: sad mood (1.40 pts) beats high-energy need | User gets low-energy sad songs when seeking energetic music |
+| **Filter bubble by mood** | Peaceful classical listener: 1.81 point gap from top to 2nd | Rare moods (peaceful, nostalgic) isolate users from cross-genre |
+| **Genre soft weight** | Pop listener sees indie pop rank 2nd; rock listener sees pop in top 5 | Genre matching is not a strong signal — may confuse users expecting genre purity |
+| **Small dataset effects** | Only 1 "sad" song, 1 "peaceful" song, 1 "nostalgic" song | Unique moods cannot offer variety; recommender forced to sub with mismatched moods |
+| **No mood similarity** | "Angry" ≠ "intense" in scoring, despite semantic closeness | System treats all mood mismatches as absolute — misses related emotional tones |
 
 Use this section to document the experiments you ran. For example:
 
